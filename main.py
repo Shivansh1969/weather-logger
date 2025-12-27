@@ -38,10 +38,11 @@ def get_weather_data(start_date, end_date):
         humidity = data['daily']['relative_humidity_2m_mean']
         pressure = data['daily']['surface_pressure_mean']
         
+        # --- MODIFIED: Columns matched to your Dashboard requirements ---
         df = pd.DataFrame({
-            "Date": dates,
-            "average humidity(%)": humidity,
-            "average pressure(hPa)": pressure
+            "Date_Time": dates,               # Format: YYYY-MM-DD
+            "Humidity_Percent": humidity,     # Format: Float
+            "Pressure_hPa": pressure          # Format: Float
         })
         return df
     except Exception as e:
@@ -65,12 +66,21 @@ def main():
         downloaded_path = hf_hub_download(
             repo_id=REPO_ID,
             filename=FILENAME,
-            repo_type="dataset",
+            repo_type=DATASET_TYPE, # Explicitly set to 'dataset'
             token=HF_TOKEN
         )
         existing_df = pd.read_csv(downloaded_path)
         file_exists = True
         print("Existing dataset found.")
+        
+        # Helper: If existing dataset has old column names, rename them to avoid errors
+        rename_map = {
+            "Date": "Date_Time", 
+            "average humidity(%)": "Humidity_Percent", 
+            "average pressure(hPa)": "Pressure_hPa"
+        }
+        existing_df.rename(columns=rename_map, inplace=True)
+        
     except (RepositoryNotFoundError, EntryNotFoundError):
         print("No existing dataset found. Initializing new dataset.")
         existing_df = pd.DataFrame()
@@ -90,7 +100,8 @@ def main():
         
     else:
         # Daily Update: Fetch only Yesterday
-        if 'Date' in existing_df.columns and str(yesterday) in existing_df['Date'].values:
+        # --- MODIFIED: Checks for 'Date_Time' instead of 'Date' ---
+        if 'Date_Time' in existing_df.columns and str(yesterday) in existing_df['Date_Time'].values:
             print(f"Data for {yesterday} already exists. Skipping update.")
             return
 
