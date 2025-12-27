@@ -1,0 +1,31 @@
+name: Daily Weather Logger
+
+on:
+  schedule:
+    # Runs at 00:30 UTC every day 
+    # (This is 6:00 AM India Standard Time)
+    - cron: '30 0 * * *'
+  # Allows you to run this manually from the Actions tab for testing
+  workflow_dispatch:
+
+jobs:
+  update-weather-data:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        pip install pandas requests huggingface_hub
+
+    - name: Run Weather Script
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      run: python main.py
